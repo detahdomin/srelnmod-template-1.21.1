@@ -1,0 +1,26 @@
+{
+  "jiguangfashe": {
+    "sounds": ["sreln_mod:jiguangfashe"]
+  },
+  "jiguangchixu": {
+    "sounds": ["sreln_mod:jiguangchixu"]
+  },
+  "transmission_sound_effect": {
+    "sounds": ["sreln_mod:transmission_sound_effect"]
+  },
+  "qidongjiguang": {
+    "sounds": ["sreln_mod:qidongjiguang"]
+  },
+  "power_button": {
+    "sounds": ["sreln_mod:power_button"]
+  },
+  "fan_hum": {
+    "sounds": ["sreln_mod:fan_hum"]
+  },
+  "welcome_voice": {
+    "sounds": ["sreln_mod:welcome_voice"]
+  },
+  "shutdown_voice": {
+    "sounds": ["sreln_mod:shutdown_voice"]
+  }
+}

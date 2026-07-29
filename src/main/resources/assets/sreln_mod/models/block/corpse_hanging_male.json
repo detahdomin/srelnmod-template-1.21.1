@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "sreln_mod:block/corpse/particle"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent":"minecraft:item/generated",
+  "textures":{
+    "layer0":"sreln_mod:item/pearl/swift_ender_pearl"
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "type": "sreln_mod:pearl_upgrade",
+    "template": {
+        "item": "minecraft:netherite_upgrade_smithing_template"
+    },
+    "base": {
+        "tag": "sreln_mod:pearl_upgradable"
+    },
+    "addition": {
+        "item": "minecraft:obsidian"
+    },
+    "result": {
+        "id": "sreln_mod:pearl/assault_ender_pearl",
+        "count": 1
+    }
+}

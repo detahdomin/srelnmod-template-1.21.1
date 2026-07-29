@@ -1,0 +1,380 @@
+<body>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 427px;
+    height: 240px;
+    background: #0a0f1a;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #c8d6e5;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.06) 0px,
+      rgba(0, 0, 0, 0.06) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Subtle vignette */
+  body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+    pointer-events: none;
+    z-index: 998;
+  }
+
+  #terminal {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
+
+  /* Header bar */
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+    margin-bottom: 6px;
+  }
+
+  #header .brand {
+    color: #60a5fa;
+    font-weight: bold;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
+  }
+
+  #header .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+  }
+
+  /* Progress bar area */
+  #progress-area {
+    height: 18px;
+    margin-bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #progress-label {
+    font-size: 10px;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+
+  #progress-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(96, 165, 250, 0.1);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #60a5fa, #93c5fd);
+    box-shadow: 0 0 6px rgba(96, 165, 250, 0.5);
+    transition: width 0.1s linear;
+  }
+
+  #progress-area.done #progress-fill {
+    background: linear-gradient(90deg, #34d399, #6ee7b7);
+    box-shadow: 0 0 6px rgba(52, 211, 153, 0.5);
+  }
+
+  /* Output area */
+  #output {
+    flex: 1;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+
+  #output .line {
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  #output .line.accent { color: #60a5fa; }
+  #output .line.dim { color: #64748b; }
+  #output .line.ok { color: #34d399; }
+  #output .line.err { color: #f87171; }
+  #output .line.warn { color: #fbbf24; }
+  #output .line.cmd { color: #94a3b8; }
+
+  /* Input line */
+  #input-line {
+    display: flex;
+    align-items: center;
+    height: 16px;
+    border-top: 1px solid rgba(96, 165, 250, 0.15);
+    padding-top: 4px;
+  }
+
+  #prompt {
+    color: #60a5fa;
+    font-weight: bold;
+    font-size: 11px;
+    white-space: pre;
+    text-shadow: 0 0 6px rgba(96, 165, 250, 0.3);
+  }
+
+  #cmd-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    caret-color: #60a5fa;
+    padding: 0;
+    margin-left: 2px;
+  }
+
+  /* Blinking cursor simulation */
+  #cursor {
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: #60a5fa;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 1px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  #cursor.hidden { display: none; }
+
+  /* Glow pulse on border */
+  @keyframes glow-pulse {
+    0%, 100% { border-color: rgba(96, 165, 250, 0.15); }
+    50% { border-color: rgba(96, 165, 250, 0.35); }
+  }
+
+  #input-line {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+</style>
+
+<div id="terminal">
+  <div id="header">
+    <span class="brand">SRELab TERMINAL v1.0</span>
+    <span class="status-dot"></span>
+  </div>
+
+  <div id="progress-area">
+    <div id="progress-label">Initializing system...</div>
+    <div id="progress-track">
+      <div id="progress-fill"></div>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <div id="input-line">
+    <span id="prompt">root@srelab:~$ </span>
+    <input id="cmd-input" type="text" autocomplete="off" spellcheck="false" />
+    <span id="cursor"></span>
+  </div>
+</div>
+
+<script>
+  var output = document.querySelector('#output');
+  var cmdInput = document.querySelector('#cmd-input');
+  var cursor = document.querySelector('#cursor');
+  var progressFill = document.querySelector('#progress-fill');
+  var progressLabel = document.querySelector('#progress-label');
+  var progressArea = document.querySelector('#progress-area');
+  var prompt = document.querySelector('#prompt');
+
+  var progress = 0;
+  var progressMax = 60;
+  var ready = false;
+  var history = [];
+  var historyIdx = -1;
+
+  function addLine(text, cls) {
+    var line = document.createElement('div');
+    line.className = 'line' + (cls ? ' ' + cls : '');
+    line.innerText = text;
+    output.append(line);
+    output.scrollTop = output.scrollHeight;
+  }
+
+  function submitCommand() {
+    var cmd = cmdInput.value.trim();
+    if (!cmd) return;
+
+    history.push(cmd);
+    historyIdx = history.length;
+
+    addLine('root@srelab:~$ ' + cmd, 'cmd');
+
+    if (!ready) {
+      addLine('[SYS] Loading ' + Math.floor(progress / progressMax * 100) + '%...', 'dim');
+      cmdInput.value = '';
+      updateCursor();
+      return;
+    }
+
+    var parts = cmd.toLowerCase().split(/\s+/);
+    switch (parts[0]) {
+      case 'open':
+        addLine('[OK] System online. Terminal active.', 'ok');
+        prompt.innerText = 'root@srelab:~$ ';
+        break;
+      case 'close':
+        addLine('[OK] System shutdown. Terminal offline.', 'warn');
+        prompt.innerText = 'root@srelab:~$ ';
+        break;
+      case 'status':
+        addLine('  ACTIVE : TRUE', 'ok');
+        addLine('  LOAD   : 100%', 'dim');
+        addLine('  UPTIME : ' + Math.floor(Math.random() * 999) + ' cycles', 'dim');
+        break;
+      case 'clear':
+        while (output.firstChild) {
+          output.removeChild(output.firstChild);
+        }
+        break;
+      case 'help':
+        addLine('  open     Activate terminal', 'accent');
+        addLine('  close    Deactivate terminal', 'accent');
+        addLine('  status   System status', 'accent');
+        addLine('  clear    Clear screen', 'accent');
+        addLine('  help     This help', 'accent');
+        addLine('  whoami   Display user', 'accent');
+        addLine('  ls       List modules', 'accent');
+        break;
+      case 'whoami':
+        addLine('  root', 'accent');
+        break;
+      case 'ls':
+        addLine('  core.mod    lamp.mod    console.mod    net.mod', 'dim');
+        break;
+      default:
+        addLine('[ERR] Unknown command: ' + parts[0], 'err');
+        addLine('  Type "help" for available commands.', 'dim');
+    }
+
+    cmdInput.value = '';
+    updateCursor();
+  }
+
+  function updateCursor() {
+    if (cmdInput.value.length > 0) {
+      cursor.classList.add('hidden');
+    } else {
+      cursor.classList.remove('hidden');
+    }
+  }
+
+  function tickProgress() {
+    if (progress < progressMax) {
+      progress++;
+      var pct = Math.floor(progress / progressMax * 100);
+      progressFill.style.width = pct + '%';
+      progressLabel.innerText = 'Initializing system... ' + pct + '%';
+
+      if (progress >= progressMax) {
+        progressArea.classList.add('done');
+        progressLabel.innerText = 'READY';
+        ready = true;
+        addLine('[OK] System ready. All modules loaded.', 'ok');
+        addLine('Type "help" for available commands.', 'dim');
+      }
+    }
+  }
+
+  cmdInput.addEventListener('input', function() {
+    updateCursor();
+  });
+
+  cmdInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitCommand();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIdx > 0) {
+        historyIdx--;
+        cmdInput.value = history[historyIdx];
+        updateCursor();
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIdx < history.length - 1) {
+        historyIdx++;
+        cmdInput.value = history[historyIdx];
+      } else {
+        historyIdx = history.length;
+        cmdInput.value = '';
+      }
+      updateCursor();
+    }
+  });
+
+  // Focus input on click anywhere
+  document.querySelector('#terminal').addEventListener('click', function() {
+    cmdInput.focus();
+  });
+
+  // Start progress
+  addLine('SRELab Terminal System v1.0', 'accent');
+  addLine('Initializing...', 'dim');
+
+  setInterval(tickProgress, 50);
+
+  // Auto focus
+  setTimeout(function() {
+    cmdInput.focus();
+  }, 100);
+</script>
+</body>

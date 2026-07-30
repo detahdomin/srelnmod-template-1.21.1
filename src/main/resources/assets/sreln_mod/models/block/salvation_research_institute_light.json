@@ -1,0 +1,31 @@
+{
+	"texture_size": [64, 64],
+	"textures": {
+		"0": "sreln_mod:block/salvation_research_institute_light",
+		"particle": "sreln_mod:block/salvation_research_institute_light"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 16, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [0, 0, 0]},
+			"faces": {
+				"north": {"uv": [4, 4, 8, 8], "texture": "#0"},
+				"east": {"uv": [4.0625, 0, 8.0625, 4], "texture": "#0"},
+				"south": {"uv": [9.125, 0, 13.25, 4], "texture": "#0"},
+				"west": {"uv": [0, 4, 4, 8], "texture": "#0"},
+				"up": {"uv": [8.0625, 9.5625, 12.125, 13.5625], "texture": "#0"},
+				"down": {"uv": [9.875, 4.875, 14.1875, 9.0625], "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [40, 108, -67],
+			"translation": [14.5, -3.25, 0]
+		},
+		"head": {
+			"translation": [34, 0, 0]
+		}
+	}
+}

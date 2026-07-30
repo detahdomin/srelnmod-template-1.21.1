@@ -54,6 +54,14 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
         setChanged();
     }
 
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && !level.isClientSide && level.isLoaded(worldPosition)) {
+            forceLightsOff();
+        }
+    }
+
     public void setLights(boolean on) {
         if (level == null || level.isClientSide) return;
         LightingConsoleBlockEntity console = findConsole();
@@ -72,6 +80,9 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 
     private LightingConsoleBlockEntity findConsole() {
         if (consolePos != null) {
+            if (!level.isLoaded(consolePos)) {
+                level.getChunk(consolePos);
+            }
             BlockEntity be = level.getBlockEntity(consolePos);
             if (be instanceof LightingConsoleBlockEntity console
                     && console.getTerminalPositions().contains(worldPosition)) {

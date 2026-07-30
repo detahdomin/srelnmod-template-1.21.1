@@ -16,7 +16,7 @@ public class ModCreativeModeTabs {
 
     public static final Supplier<CreativeModeTab> INSTITUTE_TAB =
             CREATIVE_MODE_TABS.register("institute_tab", () -> CreativeModeTab.builder()
-                    .icon(() -> new ItemStack(ModItems.TARGET_DESIGNATOR.get()))
+                    .icon(() -> new ItemStack(ModBlocks.TERMINAL.asItem()))
                     .title(net.minecraft.network.chat.Component.literal("研究所"))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.Recall_Ender_Pearl);
@@ -36,6 +36,7 @@ public class ModCreativeModeTabs {
                         output.accept(ModBlocks.ORBITAL_STRIKE_CANNON);
                         output.accept(ModBlocks.WHITE_POOL_TILE);
                         output.accept(ModBlocks.WHITE_CERAMIC_TILE_PILLAR);
+                        output.accept(ModBlocks.SALVATION_RESEARCH_INSTITUTE_LIGHT);
                         output.accept(ModBlocks.LIGHTING_CONSOLE);
                         output.accept(ModBlocks.TERMINAL);
                         output.accept(ModBlocks.CORPSE_HANGING_MALE);

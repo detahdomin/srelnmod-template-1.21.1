@@ -26,6 +26,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private int scrollOffset;
     private int bootTicks;
     private boolean booted;
+    private boolean ready;
     private int slideInTicks;
     private boolean powerButtonPlayed;
     private boolean welcomePlayed;
@@ -45,7 +46,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final int FOOTER_H = 14;
     private static final int INPUT_H = 16;
     private static final int BAR_COLOR = 0xFF5A9AFF;
-    private static final int BAR_BG = 0xC01A2240;
     private static final int TEXT_COLOR = 0x96C8FF;
     private static final int PROMPT_COLOR = 0x5A9AFF;
     private static final int ERROR_COLOR = 0xFF6B6B;
@@ -91,20 +91,22 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             bootTicks++;
             if (bootTicks >= MAX_BOOT_TICKS) {
                 booted = true;
-                this.minecraft.player.playSound(ModSounds.FAN_HUM.get(), 0.3f, 1.0f);
-                fanHumTimer = 0;
-                enqueue("SRE Laboratory Terminal v3.7");
-                enqueue("Type /help for commands.");
-                enqueue("");
+                if (!shuttingDown) {
+                    this.minecraft.player.playSound(ModSounds.FAN_HUM.get(), 0.3f, 1.0f);
+                    enqueue("SRE Laboratory Terminal v3.7");
+                    enqueue("Type /help for commands.");
+                    enqueue("");
+                }
             }
         }
 
-        if (booted && !welcomePlayed && typingLine == null && pendingLines.isEmpty()) {
+        if (booted && !welcomePlayed && !shuttingDown && typingLine == null && pendingLines.isEmpty()) {
             welcomePlayed = true;
+            ready = true;
             this.minecraft.player.playSound(ModSounds.WELCOME_VOICE.get(), 0.8f, 1.0f);
         }
 
-        if (booted && !shuttingDown) {
+        if (booted) {
             fanHumTimer++;
             if (fanHumTimer >= FAN_HUM_INTERVAL) {
                 fanHumTimer = 0;
@@ -116,7 +118,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             shutdownTick++;
         }
 
-        this.input.setVisible(booted && !shuttingDown);
+        this.input.setVisible(ready && !shuttingDown);
 
         if (typingLine != null) {
             typingTick++;
@@ -142,7 +144,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (!booted || shuttingDown) return true;
+        if (shuttingDown) return true;
+        if (this.minecraft.options.keyInventory.matches(keyCode, scanCode)) return true;
+        if (!ready) return true;
         if (this.input.keyPressed(keyCode, scanCode, modifiers)) return true;
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
             String cmd = this.input.getValue().trim();
@@ -150,7 +154,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             this.input.setValue("");
             return true;
         }
-        if (this.minecraft.options.keyInventory.matches(keyCode, scanCode)) return true;
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
@@ -159,12 +162,19 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         return false;
     }
 
+    @Override
+    public void removed() {
+        super.removed();
+        this.minecraft.getSoundManager().stop(ResourceLocation.fromNamespaceAndPath("sreln_mod", "fan_hum"), SoundSource.PLAYERS);
+        this.minecraft.getSoundManager().stop(ResourceLocation.fromNamespaceAndPath("sreln_mod", "welcome_voice"), SoundSource.PLAYERS);
+    }
+
     private void startShutdown() {
         shuttingDown = true;
         shutdownLinesDone = 0;
         shutdownTotalLines = 4;
         shutdownTick = 0;
-        this.minecraft.getSoundManager().stop(ResourceLocation.fromNamespaceAndPath("sreln_mod", "fan_hum"), SoundSource.BLOCKS);
+        this.minecraft.getSoundManager().stop(ResourceLocation.fromNamespaceAndPath("sreln_mod", "welcome_voice"), SoundSource.PLAYERS);
         this.minecraft.player.playSound(ModSounds.SHUTDOWN_VOICE.get(), 0.8f, 1.0f);
         enqueue("[SYS] Shutdown signal received...");
         enqueue("[SYS] Terminating processes...");
@@ -175,7 +185,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        if (!booted || shuttingDown) return true;
+        if (!ready || shuttingDown) return true;
         if (this.input.charTyped(codePoint, modifiers)) {
             this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.15f, 1.6f);
             return true;
@@ -273,7 +283,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
         g.drawString(this.font, "TERMINAL CONTROL", x + 6, y + 5, PROMPT_COLOR);
         String status = booted ? "SYSTEM ONLINE" : "BOOTING...";
-        g.drawString(this.font, status, x + w - this.font.width(status) - 6, y + 5, booted ? OK_COLOR : TEXT_COLOR);
+        g.drawString(this.font, status, x + w - this.font.width(status) - 6, y + 5, TEXT_COLOR);
 
         if (!booted) {
             renderBoot(g, x, y, w, h);
@@ -321,7 +331,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
         g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF1A2240);
         float lineProgress = shutdownTotalLines > 0 ? (float) shutdownLinesDone / shutdownTotalLines : 0f;
-        float tickProgress = (float) shutdownTick / MAX_SHUTDOWN_TICKS;
+        float tickProgress = Math.min(1f, (float) shutdownTick / MAX_SHUTDOWN_TICKS);
         float progress = Math.max(lineProgress, tickProgress);
         float remaining = 1f - progress;
         int fillW = (int) (barW * remaining);
@@ -389,7 +399,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double sx, double sy) {
-        if (!booted || shuttingDown) return true;
+        if (!ready || shuttingDown) return true;
         int max = visibleLines();
         scrollOffset = (int) Mth.clamp(scrollOffset - sy, 0, Math.max(0, outputLines.size() - max));
         return true;

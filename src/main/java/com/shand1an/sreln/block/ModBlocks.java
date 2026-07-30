@@ -27,6 +27,9 @@ public class ModBlocks {
     public static final DeferredBlock<Block> WHITE_POOL_TILE =
             registerBlock("white_pool_tile", () -> new Block(BlockBehaviour.Properties.of().strength(1.5F, 6.0F)));
 
+    public static final DeferredBlock<Block> SALVATION_RESEARCH_INSTITUTE_LIGHT =
+            registerBlock("salvation_research_institute_light", () -> new Block(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion().lightLevel(s -> 15)));
+
     public static final DeferredBlock<Block> WHITE_CERAMIC_TILE_PILLAR =
             registerBlock("white_ceramic_tile_pillar", () -> new WhiteCeramicTilePillarBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion()));
 

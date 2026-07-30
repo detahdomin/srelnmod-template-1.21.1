@@ -38,6 +38,7 @@ public class LightingConsoleBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public void addTerminal(BlockPos pos) {
+        if (terminalPositions.contains(pos)) return;
         terminalPositions.add(pos);
         setChanged();
         sync();
@@ -48,6 +49,7 @@ public class LightingConsoleBlockEntity extends BlockEntity implements MenuProvi
     public List<BlockPos> getTerminalPositions() { return terminalPositions; }
 
     public void addLamp(BlockPos pos) {
+        if (lampPositions.contains(pos)) return;
         lampPositions.add(pos.immutable());
         setChanged();
         sync();
@@ -60,7 +62,17 @@ public class LightingConsoleBlockEntity extends BlockEntity implements MenuProvi
         }
     }
 
-    public int getLampCount() { return lampPositions.size(); }
+    public int getActiveTerminalCount() {
+        if (terminalPositions.isEmpty()) return 0;
+        Level level = getLevel();
+        if (level == null) return 0;
+        int count = 0;
+        for (BlockPos pos : terminalPositions) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof TerminalBlockEntity terminal && terminal.isActive()) count++;
+        }
+        return count;
+    }
 
     public boolean areAllTerminalsOn() {
         if (terminalPositions.isEmpty()) return true;
@@ -116,7 +128,8 @@ public class LightingConsoleBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide && level.isLoaded(worldPosition)) {
+            forceLightsOff();
             for (BlockPos pos : terminalPositions) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof TerminalBlockEntity terminal) {

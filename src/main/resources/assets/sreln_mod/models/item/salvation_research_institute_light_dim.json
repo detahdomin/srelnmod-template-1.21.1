@@ -1,5 +1,5 @@
 {
-  "parent": "sreln_mod:block/salvation_research_institute_light",
+  "parent": "sreln_mod:block/salvation_research_institute_light_dim",
   "display": {
     "gui": {
       "rotation": [30, 45, 0],

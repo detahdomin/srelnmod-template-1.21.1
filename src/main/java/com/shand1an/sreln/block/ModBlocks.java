@@ -2,6 +2,7 @@ package com.shand1an.sreln.block;
 
 import com.shand1an.sreln.block.corpse.CorpseBlock;
 import com.shand1an.sreln.block.corpse.CorpseBlockItem;
+import com.shand1an.sreln.block.facility.FacilityTerminalBlock;
 import com.shand1an.sreln.block.terminal.TerminalBlock;
 import com.shand1an.sreln.item.ModItems;
 import com.shand1an.sreln.srelnMod;
@@ -28,7 +29,7 @@ public class ModBlocks {
             registerBlock("white_pool_tile", () -> new Block(BlockBehaviour.Properties.of().strength(1.5F, 6.0F)));
 
     public static final DeferredBlock<Block> SALVATION_RESEARCH_INSTITUTE_LIGHT =
-            registerBlock("salvation_research_institute_light", () -> new Block(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion().lightLevel(s -> 15)));
+            registerBlock("salvation_research_institute_light_dim", () -> new net.minecraft.world.level.block.RedstoneLampBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion().lightLevel(s -> s.getValue(net.minecraft.world.level.block.RedstoneLampBlock.LIT) ? 15 : 0)));
 
     public static final DeferredBlock<Block> WHITE_CERAMIC_TILE_PILLAR =
             registerBlock("white_ceramic_tile_pillar", () -> new WhiteCeramicTilePillarBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion()));
@@ -38,6 +39,9 @@ public class ModBlocks {
 
     public static final DeferredBlock<TerminalBlock> TERMINAL =
             registerBlock("terminal", () -> new TerminalBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion()));
+
+    public static final DeferredBlock<FacilityTerminalBlock> FACILITY_TERMINAL =
+            registerBlock("facility_terminal", () -> new FacilityTerminalBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion()));
 
     public static final DeferredBlock<CorpseBlock> CORPSE_HANGING_MALE =
             registerCorpseBlock("corpse_hanging_male", "hanging_male");

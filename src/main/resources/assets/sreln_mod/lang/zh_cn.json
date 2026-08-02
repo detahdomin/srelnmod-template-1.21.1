@@ -40,5 +40,12 @@
     "item.sreln_mod.traveler_key.no_door": "主人，我并没有发现门",
     "item.sreln_mod.traveler_key.blocked": "主人，目标位置被阻挡了",
     "block.sreln_mod.terminal": "终端",
-    "item.sreln_mod.terminal_binder": "终端绑定器"
+    "item.sreln_mod.terminal_binder": "终端绑定器",
+    "block.sreln_mod.facility_terminal": "设施控制器",
+    "item.sreln_mod.facility_binder": "设施绑定器",
+    "item.sreln_mod.hacker_badge": "黑客天赋",
+    "item.sreln_mod.chemical_toxic_bucket": "化工毒液桶",
+    "item.sreln_mod.crude_oil_bucket": "原油桶",
+    "block.sreln_mod.chemical_toxic_fluid": "化工毒液",
+    "block.sreln_mod.crude_oil_fluid": "原油"
 }

@@ -46,6 +46,13 @@
     "item.sreln_mod.traveler_key.blocked": "Master, the destination is blocked",
     "block.sreln_mod.terminal": "Terminal",
     "item.sreln_mod.terminal_binder": "Terminal Binder",
+    "block.sreln_mod.facility_terminal": "Facility Controller",
+    "item.sreln_mod.facility_binder": "Facility Binder",
+    "item.sreln_mod.hacker_badge": "Hacker Badge",
+    "item.sreln_mod.chemical_toxic_bucket": "Chemical Toxic Bucket",
+    "item.sreln_mod.crude_oil_bucket": "Crude Oil Bucket",
+    "block.sreln_mod.chemical_toxic_fluid": "Chemical Toxic Fluid",
+    "block.sreln_mod.crude_oil_fluid": "Crude Oil",
     "gui.sreln_mod.lights_on": "Turn On",
     "gui.sreln_mod.lights_off": "Turn Off"
 }

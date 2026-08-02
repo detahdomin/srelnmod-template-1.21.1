@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "sreln_mod:block/salvation_research_institute_light_dim"
+    },
+    "lit=true": {
+      "model": "sreln_mod:block/salvation_research_institute_light_dim_on"
+    }
+  }
+}

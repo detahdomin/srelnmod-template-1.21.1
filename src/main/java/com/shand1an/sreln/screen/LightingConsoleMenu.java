@@ -15,15 +15,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public class LightingConsoleMenu extends AbstractContainerMenu {
 
     public final LightingConsoleBlockEntity blockEntity;
+    public final boolean isHacker;
     private final ContainerLevelAccess access;
 
     public LightingConsoleMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        this(containerId, playerInv, getBlockEntity(playerInv, extraData.readBlockPos()));
+        this(containerId, playerInv, getBlockEntity(playerInv, extraData.readBlockPos()), extraData.readBoolean());
     }
 
-    public LightingConsoleMenu(int containerId, Inventory playerInv, LightingConsoleBlockEntity blockEntity) {
+    public LightingConsoleMenu(int containerId, Inventory playerInv, LightingConsoleBlockEntity blockEntity, boolean isHacker) {
         super(ModMenuTypes.LIGHTING_CONSOLE.get(), containerId);
         this.blockEntity = blockEntity;
+        this.isHacker = isHacker;
         this.access = ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos());
     }
 

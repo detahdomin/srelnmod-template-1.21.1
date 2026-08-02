@@ -3,6 +3,7 @@ package com.shand1an.sreln;
 import com.shand1an.sreln.block.ModBlockEntities;
 import com.shand1an.sreln.block.corpse.CorpseBlockRenderer;
 import com.shand1an.sreln.client.FakePlayerEntityRenderer;
+import com.shand1an.sreln.fluid.ModFluids;
 import com.shand1an.sreln.client.OrbitalLaserRenderer;
 import com.shand1an.sreln.client.TargetDesignatorRenderer;
 import com.shand1an.sreln.entity.ModEntityTypes;
@@ -11,6 +12,7 @@ import com.shand1an.sreln.screen.ModMenuTypes;
 import com.shand1an.sreln.screen.LightingConsoleScreen;
 import com.shand1an.sreln.screen.OrbitalStrikeCannonScreen;
 import com.shand1an.sreln.screen.TerminalScreen;
+import com.shand1an.sreln.screen.FacilityTerminalScreen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -73,6 +75,13 @@ public class srelnModClient {
         EntityRenderers.register(ModEntityTypes.SUMMONED_WARDEN.get(), net.minecraft.client.renderer.entity.WardenRenderer::new);
         EntityRenderers.register(ModEntityTypes.TARGET_DESIGNATOR.get(), TargetDesignatorRenderer::new);
         EntityRenderers.register(ModEntityTypes.ORBITAL_LASER.get(), OrbitalLaserRenderer::new);
+
+        event.enqueueWork(() -> Minecraft.getInstance().getItemColors()
+                .register((stack, tintIndex) -> tintIndex == 0 ? 0xFF_88CC44 : 0xFFFFFFFF,
+                        ModFluids.CHEMICAL_TOXIC_BUCKET.get()));
+        event.enqueueWork(() -> Minecraft.getInstance().getItemColors()
+                .register((stack, tintIndex) -> tintIndex == 0 ? 0xFF_1A1A1A : 0xFFFFFFFF,
+                        ModFluids.CRUDE_OIL_BUCKET.get()));
     }
 
     @SubscribeEvent
@@ -85,6 +94,7 @@ public class srelnModClient {
         event.register(ModMenuTypes.ORBITAL_STRIKE_CANNON.get(), OrbitalStrikeCannonScreen::new);
         event.register(ModMenuTypes.TERMINAL.get(), TerminalScreen::new);
         event.register(ModMenuTypes.LIGHTING_CONSOLE.get(), LightingConsoleScreen::new);
+        event.register(ModMenuTypes.FACILITY_TERMINAL.get(), FacilityTerminalScreen::new);
     }
 
     private static final ResourceLocation NULL_SKIN_TEXTURE =

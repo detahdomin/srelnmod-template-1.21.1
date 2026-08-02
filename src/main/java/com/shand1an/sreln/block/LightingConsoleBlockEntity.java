@@ -200,6 +200,6 @@ public class LightingConsoleBlockEntity extends BlockEntity implements MenuProvi
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
-        return new LightingConsoleMenu(containerId, playerInv, this);
+        return new LightingConsoleMenu(containerId, playerInv, this, player.getTags().contains("hacker"));
     }
 }

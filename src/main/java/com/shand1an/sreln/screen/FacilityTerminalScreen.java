@@ -9,12 +9,11 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
 
-public class LightingConsoleScreen extends AbstractContainerScreen<LightingConsoleMenu> implements TerminalInputHandler {
+public class FacilityTerminalScreen extends AbstractContainerScreen<FacilityTerminalMenu> implements TerminalInputHandler {
 
     private EditBox input;
     private final List<String> outputLines = new ArrayList<>();
@@ -22,11 +21,10 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
     private String typingLine;
     private int typingChar;
     private int typingTick;
-    private int scrollOffset;
-    private int slideInTicks;
     private int bootTicks;
     private boolean booted;
     private boolean ready;
+    private int slideInTicks;
     private boolean powerButtonPlayed;
     private boolean welcomePlayed;
     private int fanHumTimer;
@@ -39,30 +37,32 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
     private int historyIndex = -1;
     private static final int MAX_SHUTDOWN_TICKS = 120;
     private static final int MAX_SLIDE_TICKS = 15;
+    private static final int TYPE_SPEED = 1;
     private static final int MAX_BOOT_TICKS = 160;
     private static final int FAN_HUM_INTERVAL = 100;
-    private static final int TYPE_SPEED = 1;
     private static final int PROGRESS_MAX_TICKS = 80;
 
-    private boolean progressActive;
+    private String progressFacility;
+    private String progressAction;
     private int progressTicks;
-    private int progressButtonId;
+    private int progressFacilityIdx;
 
-    private static final int BG_COLOR = 0xE00D1117;
+    private static final int BG_COLOR = 0xE00E0D0A;
+    private static final int HEADER_BG = 0xF02A1A0A;
     private static final int HEADER_H = 16;
     private static final int FOOTER_H = 14;
     private static final int INPUT_H = 16;
-    private static final int BAR_COLOR = 0xFF5A9AFF;
-    private static final int TEXT_COLOR = 0x96C8FF;
-    private static final int PROMPT_COLOR = 0x5A9AFF;
-    private static final int ERROR_COLOR = 0xFF6B6B;
+    private static final int BAR_COLOR = 0xFFCC7700;
+    private static final int TEXT_COLOR = 0xFFCC88;
+    private static final int PROMPT_COLOR = 0xCC8800;
+    private static final int ERROR_COLOR = 0xFF4444;
+    private static final int OK_COLOR = 0x44FF44;
     private static final int HACKER_COLOR = 0xFF4444;
-    private static final int OK_COLOR = 0x6BFF8E;
     private static final int INPUT_BG = BG_COLOR;
     private static final int SCANLINE_COLOR = 0x08000000;
-    private static final String PROMPT = "sre@lab:~$ ";
+    private static final String PROMPT = "fac@ctl:~$ ";
 
-    public LightingConsoleScreen(LightingConsoleMenu menu, Inventory playerInv, Component title) {
+    public FacilityTerminalScreen(FacilityTerminalMenu menu, Inventory playerInv, Component title) {
         super(menu, playerInv, title);
         this.imageWidth = 320;
         this.imageHeight = 200;
@@ -86,6 +86,57 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
     }
 
     @Override
+    public boolean isHacker() {
+        return this.menu.isHacker;
+    }
+
+    @Override
+    public List<String> buildCompletions() {
+        List<String> completions = new ArrayList<>();
+        completions.addAll(List.of("/help", "/list", "/modify", "/clear", "/exit", "/shutdown"));
+        if (isHacker()) {
+            completions.add("/reset all");
+            completions.add("!exit");
+        }
+        for (var f : this.menu.blockEntity.getFacilities()) {
+            completions.add("/modify \"" + f.name() + "\" on");
+            completions.add("/modify \"" + f.name() + "\" off");
+        }
+        return completions;
+    }
+
+    @Override
+    public TerminalTabComplete getTab() { return tab; }
+
+    @Override
+    public List<String> getHistory() { return history; }
+
+    @Override
+    public int getHistoryIndex() { return historyIndex; }
+
+    @Override
+    public void setHistoryIndex(int idx) { this.historyIndex = idx; }
+
+    @Override
+    public boolean isShuttingDown() { return shuttingDown; }
+
+    @Override
+    public boolean isReady() { return ready && progressFacility == null; }
+
+    @Override
+    public boolean isInventoryKey(int keyCode, int scanCode) {
+        return this.minecraft.options.keyInventory.matches(keyCode, scanCode);
+    }
+
+    @Override
+    public EditBox getInput() { return input; }
+
+    @Override
+    public void playTypingSound() {
+        this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.15f, 2.0f);
+    }
+
+    @Override
     public void containerTick() {
         super.containerTick();
         if (slideInTicks < MAX_SLIDE_TICKS) slideInTicks++;
@@ -101,7 +152,7 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
                 booted = true;
                 if (!shuttingDown) {
                     this.minecraft.player.playSound(ModSounds.FAN_HUM.get(), 0.3f, 1.0f);
-                    enqueue("SRE Lighting Control Terminal v2.1");
+                    enqueue("SRE Facility Control Terminal v1.0");
                     enqueue("Type /help for commands.");
                     enqueue("");
                 }
@@ -122,7 +173,7 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
             }
         }
 
-        if (progressActive) {
+        if (progressFacility != null) {
             progressTicks++;
             float pct = Math.min(1f, (float) progressTicks / PROGRESS_MAX_TICKS);
             int barLen = 20;
@@ -136,10 +187,15 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
                 outputLines.set(outputLines.size() - 1, bar.toString());
             }
             if (progressTicks >= PROGRESS_MAX_TICKS) {
-                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, progressButtonId);
+                if (progressAction.equals("ON")) {
+                    this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, progressFacilityIdx);
+                } else {
+                    this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, 100 + progressFacilityIdx);
+                }
                 this.minecraft.player.playSound(ModSounds.MISSION_COMPLETE.get(), 0.8f, 1.0f);
-                outputLines.set(outputLines.size() - 1, "  [OK] Lights " + (progressButtonId == 0 ? "activated" : "deactivated") + ".");
-                progressActive = false;
+                outputLines.set(outputLines.size() - 1, "  [OK] " + progressFacility + " " + (progressAction.equals("ON") ? "activated" : "deactivated"));
+                progressFacility = null;
+                progressAction = null;
                 progressTicks = 0;
             }
         }
@@ -201,7 +257,6 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
         enqueue("[SYS] Terminating processes...");
         enqueue("[SYS] Unmounting filesystems...");
         enqueue("[SYS] Halting system...");
-        scrollOffset = Math.max(0, outputLines.size() - visibleLines());
     }
 
     @Override
@@ -227,6 +282,7 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
     public void execute(String cmd) {
         outputLines.add(PROMPT + cmd);
         String upper = cmd.toUpperCase();
+
         if (upper.equals("!EXIT")) {
             if (isHacker()) {
                 this.onClose();
@@ -236,14 +292,25 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
                 return;
             }
         }
+
+        if (upper.startsWith("!EXIT")) {
+            outputLines.add("  [ERR] Access denied: hacker tag required");
+            return;
+        }
+
         switch (upper) {
+            case "/EXIT":
+            case "/SHUTDOWN":
+                startShutdown();
+                return;
             case "/HELP":
-                outputLines.add("  /status     - Show system status");
-                outputLines.add("  /lights on  - Turn lights on");
-                outputLines.add("  /lights off - Turn lights off");
-                outputLines.add("  /clear      - Clear screen");
-                outputLines.add("  /exit       - Shutdown & exit");
+                outputLines.add("  /list              - List all facilities");
+                outputLines.add("  /modify \"name\" on  - Activate facility");
+                outputLines.add("  /modify \"name\" off - Deactivate facility");
+                outputLines.add("  /clear             - Clear screen");
+                outputLines.add("  /exit              - Shutdown & exit");
                 if (isHacker()) {
+                    outputLines.add("  [HACKER] /reset all         - Reset all facilities");
                     outputLines.add("  [HACKER] !exit              - Force exit");
                 }
                 break;
@@ -251,91 +318,69 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
                 outputLines.clear();
                 pendingLines.clear();
                 typingLine = null;
-                outputLines.add("SRE Lighting Control Terminal v2.1");
+                outputLines.add("SRE Facility Control Terminal v1.0");
                 return;
-            case "/STATUS":
-                int t = this.menu.blockEntity.getTerminalCount();
-                boolean allOn = this.menu.blockEntity.areAllTerminalsOn();
-                outputLines.add("  Terminals: " + t);
-                outputLines.add("  All terminals: " + (allOn ? "ONLINE" : "OFFLINE"));
-                break;
-            case "/EXIT":
-            case "/SHUTDOWN":
-                startShutdown();
-                return;
-            case "/LIGHTS ON":
-                if (this.menu.blockEntity.areAllTerminalsOn()) {
-                    progressActive = true;
-                    progressTicks = 0;
-                    progressButtonId = 0;
-                    outputLines.add("  [RUN] activating lights...");
-                    outputLines.add("  [--------------------]   0%");
+            case "/LIST":
+                var facilities = this.menu.blockEntity.getFacilities();
+                if (facilities.isEmpty()) {
+                    outputLines.add("  No facilities registered.");
                 } else {
-                    outputLines.add("  [ERR] Cannot activate: terminals offline");
+                    for (var entry : facilities) {
+                        boolean on = this.menu.blockEntity.isLeverOn(entry.name());
+                        String state = on ? "ON" : "OFF";
+                        int color = on ? OK_COLOR : ERROR_COLOR;
+                        outputLines.add("  " + entry.name() + "  [" + state + "]");
+                    }
                 }
                 break;
-            case "/LIGHTS OFF":
-                if (this.menu.blockEntity.areAllTerminalsOn()) {
-                    progressActive = true;
-                    progressTicks = 0;
-                    progressButtonId = 1;
-                    outputLines.add("  [RUN] deactivating lights...");
-                    outputLines.add("  [--------------------]   0%");
-                } else {
-                    outputLines.add("  [ERR] Cannot deactivate: terminals offline");
-                }
+            case "/RESET ALL":
+                if (!isHacker()) break;
+                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, 200);
+                outputLines.add("  [RESET] All facilities deactivated.");
                 break;
             default:
+                if (upper.startsWith("/MODIFY ")) {
+                    String rest = cmd.substring(8).trim();
+                    if (rest.startsWith("\"") && rest.contains("\" ")) {
+                        int endQuote = rest.indexOf("\"", 1);
+                        if (endQuote > 0) {
+                            String name = rest.substring(1, endQuote);
+                            String action = rest.substring(endQuote + 1).trim().toUpperCase();
+                            var entry = this.menu.blockEntity.findFacility(name);
+                            if (entry == null) {
+                                outputLines.add("  [ERR] Facility '" + name + "' not found");
+                            } else if (action.equals("ON")) {
+                                int idx = this.menu.blockEntity.getFacilities().indexOf(entry);
+                                if (idx >= 0) {
+                                    progressFacility = name;
+                                    progressAction = "ON";
+                                    progressTicks = 0;
+                                    progressFacilityIdx = idx;
+                                    outputLines.add("  [RUN] activating " + name + "...");
+                                    outputLines.add("  [--------------------]   0%");
+                                }
+                            } else if (action.equals("OFF")) {
+                                int idx = this.menu.blockEntity.getFacilities().indexOf(entry);
+                                if (idx >= 0) {
+                                    progressFacility = name;
+                                    progressAction = "OFF";
+                                    progressTicks = 0;
+                                    progressFacilityIdx = idx;
+                                    outputLines.add("  [RUN] deactivating " + name + "...");
+                                    outputLines.add("  [--------------------]   0%");
+                                }
+                            } else {
+                                outputLines.add("  Usage: /modify \"name\" on|off");
+                            }
+                            break;
+                        }
+                    }
+                    outputLines.add("  Usage: /modify \"name\" on|off");
+                    break;
+                }
                 outputLines.add("  Unknown: " + upper);
                 break;
         }
-        scrollOffset = Math.max(0, outputLines.size() - visibleLines());
-    }
-
-    @Override
-    public boolean isHacker() {
-        return this.menu.isHacker;
-    }
-
-    @Override
-    public List<String> buildCompletions() {
-        List<String> completions = new ArrayList<>();
-        completions.addAll(List.of("/help", "/status", "/lights on", "/lights off", "/clear", "/exit", "/shutdown"));
-        if (isHacker()) {
-            completions.add("!exit");
-        }
-        return completions;
-    }
-
-    @Override
-    public TerminalTabComplete getTab() { return tab; }
-
-    @Override
-    public List<String> getHistory() { return history; }
-
-    @Override
-    public int getHistoryIndex() { return historyIndex; }
-
-    @Override
-    public void setHistoryIndex(int idx) { this.historyIndex = idx; }
-
-    @Override
-    public boolean isShuttingDown() { return shuttingDown; }
-
-    @Override
-    public boolean isReady() { return ready && !progressActive; }
-
-    @Override
-    public boolean isInventoryKey(int keyCode, int scanCode) {
-        return this.minecraft.options.keyInventory.matches(keyCode, scanCode);
-    }
-
-    @Override
-    public EditBox getInput() { return input; }
-
-    @Override
-    public void playTypingSound() {
-        this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.15f, 2.0f);
     }
 
     private int visibleLines() {
@@ -358,8 +403,8 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
         int x = this.leftPos, y = this.topPos, w = this.imageWidth, h = this.imageHeight;
 
         g.fill(x, y, x + w, y + h, BG_COLOR);
-        g.fill(x + 1, y + 1, x + w - 1, y + HEADER_H, 0xF01A2240);
-        g.fill(x + 1, y + h - FOOTER_H, x + w - 1, y + h - 1, 0xF01A2240);
+        g.fill(x + 1, y + 1, x + w - 1, y + HEADER_H, HEADER_BG);
+        g.fill(x + 1, y + h - FOOTER_H, x + w - 1, y + h - 1, HEADER_BG);
 
         drawScanlines(g, x, y, w, h);
 
@@ -368,24 +413,18 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
             return;
         }
 
-        g.drawString(this.font, "LIGHTING CONTROL", x + 6, y + 5, PROMPT_COLOR);
+        g.drawString(this.font, "FACILITY CONTROL", x + 6, y + 5, PROMPT_COLOR);
+        String status = booted ? "SYSTEM ONLINE" : "BOOTING...";
+        g.drawString(this.font, status, x + w - this.font.width(status) - 6, y + 5, TEXT_COLOR);
 
         if (!booted) {
-            String status = "BOOTING...";
-            g.drawString(this.font, status, x + w - this.font.width(status) - 6, y + 5, TEXT_COLOR);
             renderBoot(g, x, y, w, h);
             return;
         }
 
-        int active = this.menu.blockEntity.getActiveTerminalCount();
-        int total = this.menu.blockEntity.getTerminalCount();
-        boolean allOn = active == total;
-        String info = "T: " + active + "/" + total;
+        int facilityCount = this.menu.blockEntity.getFacilityCount();
+        String info = "F: " + facilityCount;
         g.drawString(this.font, info, x + w - this.font.width(info) - 6, y + 5, TEXT_COLOR);
-
-        String statusText = allOn ? "STATUS: ACTIVE" : "STATUS: INACTIVE";
-        int statusColor = allOn ? PROMPT_COLOR : ERROR_COLOR;
-        g.drawString(this.font, statusText, x + 6, y + h - FOOTER_H + 3, statusColor);
 
         int inputBgY = y + h - FOOTER_H - INPUT_H;
         g.fill(x + 6, inputBgY, x + w - 6, inputBgY + INPUT_H, INPUT_BG);
@@ -400,15 +439,18 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
             int ly = oy + (i - start) * 10;
             int c = TEXT_COLOR;
             if (line.startsWith(PROMPT)) c = PROMPT_COLOR;
-            else if (line.contains("[ERR]") || line.contains("OFFLINE") || line.contains("Cannot") || line.contains("Unknown")) c = ERROR_COLOR;
-            else if (line.contains("[HACKER]")) c = HACKER_COLOR;
+            else if (line.contains("[ERR]") || line.contains("Unknown") || line.contains("[OFF]")) c = ERROR_COLOR;
+            else if (line.contains("[RESET]") || line.contains("[HACKER]")) c = HACKER_COLOR;
             else if (line.startsWith("  ")) c = OK_COLOR;
             g.drawString(this.font, line, x + 8, ly, c);
         }
         if (typingLine != null) {
             int ly = oy + (outputLines.size() - start) * 10;
             String partial = typingLine.substring(0, Math.min(typingChar, typingLine.length()));
-            int c = partial.startsWith(PROMPT) ? PROMPT_COLOR : (partial.contains("OFFLINE") || partial.contains("Cannot") || partial.contains("Unknown")) ? ERROR_COLOR : partial.contains("[HACKER]") ? HACKER_COLOR : partial.startsWith("  ") ? OK_COLOR : TEXT_COLOR;
+            int c = TEXT_COLOR;
+            if (partial.contains("[ERR]") || partial.contains("Unknown")) c = ERROR_COLOR;
+            else if (partial.contains("[RESET]") || partial.contains("[HACKER]")) c = HACKER_COLOR;
+            else if (partial.startsWith("  ")) c = OK_COLOR;
             g.drawString(this.font, partial, x + 8, ly, c);
         }
     }
@@ -421,7 +463,7 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
         String title = "SYSTEM SHUTDOWN";
         g.drawString(this.font, title, cx - this.font.width(title) / 2, barY - 14, ERROR_COLOR);
 
-        g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF1A2240);
+        g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, HEADER_BG);
         float lineProgress = shutdownTotalLines > 0 ? (float) shutdownLinesDone / shutdownTotalLines : 0f;
         float tickProgress = Math.min(1f, (float) shutdownTick / MAX_SHUTDOWN_TICKS);
         float progress = Math.max(lineProgress, tickProgress);
@@ -454,10 +496,10 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
 
         String title = "SREL-OS v3.7";
         g.drawString(this.font, title, cx - this.font.width(title) / 2, barY - 28, PROMPT_COLOR);
-        String subtitle = "Lighting Control Subsystem";
+        String subtitle = "Facility Control Subsystem";
         g.drawString(this.font, subtitle, cx - this.font.width(subtitle) / 2, barY - 18, OK_COLOR);
 
-        g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF1A2240);
+        g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, HEADER_BG);
         float progress = (float) bootTicks / MAX_BOOT_TICKS;
         int fillW = (int) (barW * progress);
         g.fill(barX, barY, barX + fillW, barY + barH, BAR_COLOR);
@@ -468,8 +510,8 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
         String[] logs = {
             "Loading kernel",
             "Mounting filesystem",
-            "Initializing lighting drivers",
-            "Starting control services"
+            "Initializing facility drivers",
+            "Starting terminal services"
         };
         int logY = barY + barH + 20;
         int idx = (int) (progress * (logs.length + 1));
@@ -488,19 +530,4 @@ public class LightingConsoleScreen extends AbstractContainerScreen<LightingConso
 
     @Override
     protected void renderLabels(GuiGraphics g, int mx, int my) {}
-
-    @Override
-    public boolean mouseScrolled(double mx, double my, double sx, double sy) {
-        if (!ready || shuttingDown) return true;
-        int max = visibleLines();
-        scrollOffset = (int) Mth.clamp(scrollOffset - sy, 0, Math.max(0, outputLines.size() - max));
-        return true;
-    }
-
-    @Override
-    public void resize(Minecraft mc, int w, int h) {
-        String saved = this.input != null ? this.input.getValue() : "";
-        super.resize(mc, w, h);
-        if (this.input != null) this.input.setValue(saved);
-    }
 }

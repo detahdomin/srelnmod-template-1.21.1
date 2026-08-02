@@ -1,6 +1,7 @@
 package com.shand1an.sreln.item;
 
 import com.shand1an.sreln.block.ModBlocks;
+import com.shand1an.sreln.fluid.ModFluids;
 import com.shand1an.sreln.srelnMod;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -33,12 +34,17 @@ public class ModCreativeModeTabs {
                         output.accept(ModItems.MIMIC);
                         output.accept(ModItems.TRAVELER_KEY);
                         output.accept(ModItems.TERMINAL_BINDER);
+                        output.accept(ModItems.FACILITY_BINDER);
+                        output.accept(ModItems.HACKER_BADGE);
+                        output.accept(ModFluids.CHEMICAL_TOXIC_BUCKET);
+                        output.accept(ModFluids.CRUDE_OIL_BUCKET);
                         output.accept(ModBlocks.ORBITAL_STRIKE_CANNON);
                         output.accept(ModBlocks.WHITE_POOL_TILE);
-                        output.accept(ModBlocks.WHITE_CERAMIC_TILE_PILLAR);
                         output.accept(ModBlocks.SALVATION_RESEARCH_INSTITUTE_LIGHT);
+                        output.accept(ModBlocks.WHITE_CERAMIC_TILE_PILLAR);
                         output.accept(ModBlocks.LIGHTING_CONSOLE);
                         output.accept(ModBlocks.TERMINAL);
+                        output.accept(ModBlocks.FACILITY_TERMINAL);
                         output.accept(ModBlocks.CORPSE_HANGING_MALE);
                         output.accept(ModBlocks.CORPSE_BEHEADED_MALE);
                         output.accept(ModBlocks.CORPSE_DISMEMBERED_FEMALE);

@@ -177,6 +177,6 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInv, Player player) {
-        return new TerminalMenu(containerId, playerInv, this);
+        return new TerminalMenu(containerId, playerInv, this, player.getTags().contains("hacker"));
     }
 }

@@ -15,15 +15,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public class TerminalMenu extends AbstractContainerMenu {
 
     public final TerminalBlockEntity blockEntity;
+    public final boolean isHacker;
     private final ContainerLevelAccess access;
 
     public TerminalMenu(int containerId, Inventory playerInv, FriendlyByteBuf extraData) {
-        this(containerId, playerInv, getBlockEntity(playerInv, extraData.readBlockPos()));
+        this(containerId, playerInv, getBlockEntity(playerInv, extraData.readBlockPos()), extraData.readBoolean());
     }
 
-    public TerminalMenu(int containerId, Inventory playerInv, TerminalBlockEntity blockEntity) {
+    public TerminalMenu(int containerId, Inventory playerInv, TerminalBlockEntity blockEntity, boolean isHacker) {
         super(ModMenuTypes.TERMINAL.get(), containerId);
         this.blockEntity = blockEntity;
+        this.isHacker = isHacker;
         this.access = ContainerLevelAccess.create(blockEntity.getLevel(), blockEntity.getBlockPos());
     }
 

@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "sreln_mod:block/facility_terminal",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "sreln_mod:block/facility_terminal",
+      "y": 0
+    },
+    "facing=south": {
+      "model": "sreln_mod:block/facility_terminal",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "sreln_mod:block/facility_terminal",
+      "y": 270
+    }
+  }
+}

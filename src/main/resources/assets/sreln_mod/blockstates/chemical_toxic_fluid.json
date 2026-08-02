@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "sreln_mod:block/chemical_toxic_fluid"
+    }
+  }
+}

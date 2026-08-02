@@ -1,7 +1,7 @@
-package com.shand1an.sreln.block;
+package com.shand1an.sreln.block.facility;
 
 import com.mojang.serialization.MapCodec;
-import com.shand1an.sreln.item.TerminalBinderItem;
+import com.shand1an.sreln.item.FacilityBinderItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,12 +27,12 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-public class LightingConsoleBlock extends BaseEntityBlock {
+public class FacilityTerminalBlock extends BaseEntityBlock {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    public static final MapCodec<LightingConsoleBlock> CODEC = simpleCodec(LightingConsoleBlock::new);
+    public static final MapCodec<FacilityTerminalBlock> CODEC = simpleCodec(FacilityTerminalBlock::new);
 
-    public LightingConsoleBlock(BlockBehaviour.Properties properties) {
+    public FacilityTerminalBlock(BlockBehaviour.Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
@@ -67,29 +67,30 @@ public class LightingConsoleBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new LightingConsoleBlockEntity(pos, state);
+        return new FacilityTerminalBlockEntity(pos, state);
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (stack.getItem() instanceof TerminalBinderItem) {
-            stack.useOn(new UseOnContext(level, player, hand, stack, hitResult));
-            return ItemInteractionResult.SUCCESS;
-        }
-        return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof LightingConsoleBlockEntity console) {
-                serverPlayer.openMenu(console, buf -> {
+            if (be instanceof FacilityTerminalBlockEntity terminal) {
+                serverPlayer.openMenu(terminal, buf -> {
                     buf.writeBlockPos(pos);
                     buf.writeBoolean(serverPlayer.getTags().contains("hacker"));
                 });
             }
         }
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                              Player player, InteractionHand hand, BlockHitResult hit) {
+        if (stack.getItem() instanceof FacilityBinderItem) {
+            stack.useOn(new UseOnContext(level, player, hand, stack, hit));
+            return ItemInteractionResult.SUCCESS;
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
     }
 }

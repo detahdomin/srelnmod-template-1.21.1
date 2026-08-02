@@ -22,5 +22,8 @@
   },
   "shutdown_voice": {
     "sounds": ["sreln_mod:shutdown_voice"]
+  },
+  "mission_complete": {
+    "sounds": ["sreln_mod:mission_complete"]
   }
 }

@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "sreln_mod:salvation_research_institute_light"
+          "name": "sreln_mod:salvation_research_institute_light_dim"
         }
       ],
       "conditions": [

@@ -24,6 +24,10 @@ public class ModMenuTypes {
             MENU_TYPES.register("lighting_console",
                     () -> IMenuTypeExtension.create(LightingConsoleMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<FacilityTerminalMenu>> FACILITY_TERMINAL =
+            MENU_TYPES.register("facility_terminal",
+                    () -> IMenuTypeExtension.create(FacilityTerminalMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENU_TYPES.register(eventBus);
     }

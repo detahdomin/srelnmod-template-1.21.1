@@ -38,6 +38,10 @@ public class ModItems {
             ITEMS.register("traveler_key", () -> new TravelerKeyItem(new Item.Properties().stacksTo(16)));
     public static final DeferredItem<Item> TERMINAL_BINDER =
             ITEMS.register("terminal_binder", () -> new TerminalBinderItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> FACILITY_BINDER =
+            ITEMS.register("facility_binder", () -> new FacilityBinderItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> HACKER_BADGE =
+            ITEMS.register("hacker_badge", () -> new HackerBadgeItem(new Item.Properties().stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

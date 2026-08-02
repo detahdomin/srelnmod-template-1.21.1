@@ -53,6 +53,11 @@ public class ModSounds {
                     () -> SoundEvent.createVariableRangeEvent(
                             ResourceLocation.fromNamespaceAndPath(srelnMod.MODID, "shutdown_voice")));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> MISSION_COMPLETE =
+            SOUND_EVENTS.register("mission_complete",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(srelnMod.MODID, "mission_complete")));
+
     public static void register(IEventBus eventBus) {
         SOUND_EVENTS.register(eventBus);
     }

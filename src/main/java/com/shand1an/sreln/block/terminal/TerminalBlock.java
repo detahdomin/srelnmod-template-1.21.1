@@ -79,7 +79,10 @@ public class TerminalBlock extends BaseEntityBlock {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof TerminalBlockEntity terminal) {
-                    serverPlayer.openMenu(terminal, buf -> buf.writeBlockPos(pos));
+                    serverPlayer.openMenu(terminal, buf -> {
+                    buf.writeBlockPos(pos);
+                    buf.writeBoolean(serverPlayer.getTags().contains("hacker"));
+                });
             }
         }
         return InteractionResult.SUCCESS;

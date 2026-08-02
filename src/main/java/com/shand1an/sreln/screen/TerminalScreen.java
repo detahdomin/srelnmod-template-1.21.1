@@ -13,9 +13,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
-import org.lwjgl.glfw.GLFW;
 
-public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
+public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> implements TerminalInputHandler {
 
     private EditBox input;
     private final List<String> outputLines = new ArrayList<>();
@@ -35,11 +34,19 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private int shutdownLinesDone;
     private int shutdownTotalLines;
     private int shutdownTick;
+    private final TerminalTabComplete tab = new TerminalTabComplete();
+    private final List<String> history = new ArrayList<>();
+    private int historyIndex = -1;
     private static final int MAX_SHUTDOWN_TICKS = 120;
     private static final int MAX_SLIDE_TICKS = 15;
     private static final int TYPE_SPEED = 1;
     private static final int MAX_BOOT_TICKS = 160;
     private static final int FAN_HUM_INTERVAL = 100;
+    private static final int PROGRESS_MAX_TICKS = 80;
+
+    private boolean progressActive;
+    private int progressTicks;
+    private int progressButtonId;
 
     private static final int BG_COLOR = 0xE00D1117;
     private static final int HEADER_H = 16;
@@ -49,6 +56,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final int TEXT_COLOR = 0x96C8FF;
     private static final int PROMPT_COLOR = 0x5A9AFF;
     private static final int ERROR_COLOR = 0xFF6B6B;
+    private static final int HACKER_COLOR = 0xFF4444;
     private static final int OK_COLOR = 0x6BFF8E;
     private static final int INPUT_BG = BG_COLOR;
     private static final int SCANLINE_COLOR = 0x08000000;
@@ -114,6 +122,28 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             }
         }
 
+        if (progressActive) {
+            progressTicks++;
+            float pct = Math.min(1f, (float) progressTicks / PROGRESS_MAX_TICKS);
+            int barLen = 20;
+            int filled = (int) (barLen * pct);
+            StringBuilder bar = new StringBuilder("  [");
+            for (int i = 0; i < barLen; i++) {
+                bar.append(i < filled ? '#' : '-');
+            }
+            bar.append("] ").append(String.format("%3d%%", (int)(pct * 100)));
+            if (!outputLines.isEmpty()) {
+                outputLines.set(outputLines.size() - 1, bar.toString());
+            }
+            if (progressTicks >= PROGRESS_MAX_TICKS) {
+                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, progressButtonId);
+                this.minecraft.player.playSound(ModSounds.MISSION_COMPLETE.get(), 0.8f, 1.0f);
+                outputLines.set(outputLines.size() - 1, "  [OK] Terminal " + (progressButtonId == 0 ? "activated" : "deactivated") + ".");
+                progressActive = false;
+                progressTicks = 0;
+            }
+        }
+
         if (shuttingDown) {
             shutdownTick++;
         }
@@ -144,16 +174,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (shuttingDown) return true;
-        if (this.minecraft.options.keyInventory.matches(keyCode, scanCode)) return true;
-        if (!ready) return true;
-        if (this.input.keyPressed(keyCode, scanCode, modifiers)) return true;
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            String cmd = this.input.getValue().trim();
-            if (!cmd.isEmpty()) execute(cmd);
-            this.input.setValue("");
-            return true;
-        }
+        if (processKey(keyCode, scanCode, modifiers)) return true;
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
@@ -203,9 +224,18 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         }
     }
 
-    private void execute(String cmd) {
+    public void execute(String cmd) {
         outputLines.add(PROMPT + cmd);
         String upper = cmd.toUpperCase();
+        if (upper.equals("!EXIT")) {
+            if (isHacker()) {
+                this.onClose();
+                return;
+            } else {
+                outputLines.add("  [ERR] Access denied: hacker tag required");
+                return;
+            }
+        }
         switch (upper) {
             case "/HELP":
                 outputLines.add("  /status     - System status");
@@ -214,6 +244,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 outputLines.add("  /clear      - Clear screen");
                 outputLines.add("  /about      - About");
                 outputLines.add("  /exit       - Shutdown & exit");
+                if (isHacker()) {
+                    outputLines.add("  [HACKER] !exit              - Force exit");
+                }
                 break;
             case "/CLEAR":
                 outputLines.clear();
@@ -237,18 +270,70 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
                 startShutdown();
                 return;
             case "/ON":
-                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, 0);
-                outputLines.add("  [OK] Terminal activated.");
+                progressActive = true;
+                progressTicks = 0;
+                progressButtonId = 0;
+                outputLines.add("  [RUN] activating terminal...");
+                outputLines.add("  [--------------------]   0%");
                 break;
             case "/OFF":
-                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, 1);
-                outputLines.add("  [OK] Terminal deactivated.");
+                progressActive = true;
+                progressTicks = 0;
+                progressButtonId = 1;
+                outputLines.add("  [RUN] deactivating terminal...");
+                outputLines.add("  [--------------------]   0%");
                 break;
             default:
                 outputLines.add("  Unknown: " + upper);
                 break;
         }
         scrollOffset = Math.max(0, outputLines.size() - visibleLines());
+    }
+
+    @Override
+    public boolean isHacker() {
+        return this.menu.isHacker;
+    }
+
+    @Override
+    public List<String> buildCompletions() {
+        List<String> completions = new ArrayList<>();
+        completions.addAll(List.of("/help", "/status", "/on", "/off", "/clear", "/about", "/exit", "/shutdown"));
+        if (isHacker()) {
+            completions.add("!exit");
+        }
+        return completions;
+    }
+
+    @Override
+    public TerminalTabComplete getTab() { return tab; }
+
+    @Override
+    public List<String> getHistory() { return history; }
+
+    @Override
+    public int getHistoryIndex() { return historyIndex; }
+
+    @Override
+    public void setHistoryIndex(int idx) { this.historyIndex = idx; }
+
+    @Override
+    public boolean isShuttingDown() { return shuttingDown; }
+
+    @Override
+    public boolean isReady() { return ready && !progressActive; }
+
+    @Override
+    public boolean isInventoryKey(int keyCode, int scanCode) {
+        return this.minecraft.options.keyInventory.matches(keyCode, scanCode);
+    }
+
+    @Override
+    public EditBox getInput() { return input; }
+
+    @Override
+    public void playTypingSound() {
+        this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.15f, 2.0f);
     }
 
     private int visibleLines() {
@@ -308,15 +393,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             int ly = oy + (i - start) * 10;
             int c = TEXT_COLOR;
             if (line.startsWith(PROMPT)) c = PROMPT_COLOR;
-            else if (line.contains("INACTIVE") || line.contains("OFFLINE")) c = ERROR_COLOR;
-            else if (line.startsWith("  Unknown")) c = ERROR_COLOR;
+            else if (line.contains("[ERR]") || line.contains("INACTIVE") || line.contains("OFFLINE") || line.contains("Unknown")) c = ERROR_COLOR;
+            else if (line.contains("[HACKER]")) c = HACKER_COLOR;
             else if (line.startsWith("  ")) c = OK_COLOR;
             g.drawString(this.font, line, x + 8, ly, c);
         }
         if (typingLine != null) {
             int ly = oy + (outputLines.size() - start) * 10;
             String partial = typingLine.substring(0, Math.min(typingChar, typingLine.length()));
-            int c = partial.startsWith(PROMPT) ? PROMPT_COLOR : (partial.contains("INACTIVE") || partial.contains("OFFLINE")) ? ERROR_COLOR : partial.startsWith("  Unknown") ? ERROR_COLOR : partial.startsWith("  ") ? OK_COLOR : TEXT_COLOR;
+            int c = partial.startsWith(PROMPT) ? PROMPT_COLOR : (partial.contains("INACTIVE") || partial.contains("OFFLINE") || partial.contains("Unknown")) ? ERROR_COLOR : partial.contains("[HACKER]") ? HACKER_COLOR : partial.startsWith("  ") ? OK_COLOR : TEXT_COLOR;
             g.drawString(this.font, partial, x + 8, ly, c);
         }
     }

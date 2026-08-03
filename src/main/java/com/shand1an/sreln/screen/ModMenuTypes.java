@@ -28,6 +28,10 @@ public class ModMenuTypes {
             MENU_TYPES.register("facility_terminal",
                     () -> IMenuTypeExtension.create(FacilityTerminalMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<InfoTerminalMenu>> INFO_TERMINAL =
+            MENU_TYPES.register("info_terminal",
+                    () -> IMenuTypeExtension.create(InfoTerminalMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENU_TYPES.register(eventBus);
     }

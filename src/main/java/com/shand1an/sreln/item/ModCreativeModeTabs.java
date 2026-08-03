@@ -45,6 +45,7 @@ public class ModCreativeModeTabs {
                         output.accept(ModBlocks.LIGHTING_CONSOLE);
                         output.accept(ModBlocks.TERMINAL);
                         output.accept(ModBlocks.FACILITY_TERMINAL);
+                        output.accept(ModBlocks.INFO_TERMINAL);
                         output.accept(ModBlocks.CORPSE_HANGING_MALE);
                         output.accept(ModBlocks.CORPSE_BEHEADED_MALE);
                         output.accept(ModBlocks.CORPSE_DISMEMBERED_FEMALE);

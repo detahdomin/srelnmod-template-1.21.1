@@ -58,6 +58,11 @@ public class ModSounds {
                     () -> SoundEvent.createVariableRangeEvent(
                             ResourceLocation.fromNamespaceAndPath(srelnMod.MODID, "mission_complete")));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> STILL_ALIVE =
+            SOUND_EVENTS.register("still_alive",
+                    () -> SoundEvent.createVariableRangeEvent(
+                            ResourceLocation.fromNamespaceAndPath(srelnMod.MODID, "still_alive")));
+
     public static void register(IEventBus eventBus) {
         SOUND_EVENTS.register(eventBus);
     }

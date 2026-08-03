@@ -25,5 +25,8 @@
   },
   "mission_complete": {
     "sounds": ["sreln_mod:mission_complete"]
+  },
+  "still_alive": {
+    "sounds": ["sreln_mod:still_alive"]
   }
 }

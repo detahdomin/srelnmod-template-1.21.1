@@ -3,6 +3,7 @@ package com.shand1an.sreln.block;
 import com.shand1an.sreln.block.corpse.CorpseBlock;
 import com.shand1an.sreln.block.corpse.CorpseBlockItem;
 import com.shand1an.sreln.block.facility.FacilityTerminalBlock;
+import com.shand1an.sreln.block.info.InfoTerminalBlock;
 import com.shand1an.sreln.block.terminal.TerminalBlock;
 import com.shand1an.sreln.item.ModItems;
 import com.shand1an.sreln.srelnMod;
@@ -42,6 +43,9 @@ public class ModBlocks {
 
     public static final DeferredBlock<FacilityTerminalBlock> FACILITY_TERMINAL =
             registerBlock("facility_terminal", () -> new FacilityTerminalBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion()));
+
+    public static final DeferredBlock<InfoTerminalBlock> INFO_TERMINAL =
+            registerBlock("info_terminal", () -> new InfoTerminalBlock(BlockBehaviour.Properties.of().strength(1.5F, 6.0F).noOcclusion()));
 
     public static final DeferredBlock<CorpseBlock> CORPSE_HANGING_MALE =
             registerCorpseBlock("corpse_hanging_male", "hanging_male");

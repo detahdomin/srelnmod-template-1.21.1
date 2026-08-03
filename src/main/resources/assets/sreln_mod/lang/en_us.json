@@ -53,6 +53,8 @@
     "item.sreln_mod.crude_oil_bucket": "Crude Oil Bucket",
     "block.sreln_mod.chemical_toxic_fluid": "Chemical Toxic Fluid",
     "block.sreln_mod.crude_oil_fluid": "Crude Oil",
+    "block.sreln_mod.info_terminal": "Info Terminal",
+    "item.sreln_mod.info_terminal": "Info Terminal",
     "gui.sreln_mod.lights_on": "Turn On",
     "gui.sreln_mod.lights_off": "Turn Off"
 }

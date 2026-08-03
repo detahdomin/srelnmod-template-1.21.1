@@ -47,5 +47,7 @@
     "item.sreln_mod.chemical_toxic_bucket": "化工毒液桶",
     "item.sreln_mod.crude_oil_bucket": "原油桶",
     "block.sreln_mod.chemical_toxic_fluid": "化工毒液",
-    "block.sreln_mod.crude_oil_fluid": "原油"
+    "block.sreln_mod.crude_oil_fluid": "原油",
+    "block.sreln_mod.info_terminal": "灯光枢纽终端",
+    "item.sreln_mod.info_terminal": "灯光枢纽终端"
 }

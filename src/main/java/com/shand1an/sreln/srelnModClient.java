@@ -13,6 +13,7 @@ import com.shand1an.sreln.screen.LightingConsoleScreen;
 import com.shand1an.sreln.screen.OrbitalStrikeCannonScreen;
 import com.shand1an.sreln.screen.TerminalScreen;
 import com.shand1an.sreln.screen.FacilityTerminalScreen;
+import com.shand1an.sreln.screen.InfoTerminalScreen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -95,6 +96,7 @@ public class srelnModClient {
         event.register(ModMenuTypes.TERMINAL.get(), TerminalScreen::new);
         event.register(ModMenuTypes.LIGHTING_CONSOLE.get(), LightingConsoleScreen::new);
         event.register(ModMenuTypes.FACILITY_TERMINAL.get(), FacilityTerminalScreen::new);
+        event.register(ModMenuTypes.INFO_TERMINAL.get(), InfoTerminalScreen::new);
     }
 
     private static final ResourceLocation NULL_SKIN_TEXTURE =

@@ -2,6 +2,7 @@ package com.shand1an.sreln.block;
 
 import com.shand1an.sreln.block.corpse.CorpseBlockEntity;
 import com.shand1an.sreln.block.facility.FacilityTerminalBlockEntity;
+import com.shand1an.sreln.block.info.InfoTerminalBlockEntity;
 import com.shand1an.sreln.block.terminal.TerminalBlockEntity;
 import com.shand1an.sreln.srelnMod;
 import net.minecraft.core.registries.Registries;
@@ -40,6 +41,13 @@ public class ModBlockEntities {
                     () -> BlockEntityType.Builder.of(
                             FacilityTerminalBlockEntity::new,
                             ModBlocks.FACILITY_TERMINAL.get()
+                    ).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InfoTerminalBlockEntity>> INFO_TERMINAL =
+            BLOCK_ENTITIES.register("info_terminal",
+                    () -> BlockEntityType.Builder.of(
+                            InfoTerminalBlockEntity::new,
+                            ModBlocks.INFO_TERMINAL.get()
                     ).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CorpseBlockEntity>> CORPSE =
